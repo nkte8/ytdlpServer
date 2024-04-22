@@ -1,0 +1,5 @@
+yt_dlp @ git+https://github.com/yt-dlp/yt-dlp.git@release
+moviepy
+flask
+nuitka
+flask[async]
