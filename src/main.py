@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 from pathlib import Path
 
 from flask import Flask, Response, jsonify, request
@@ -26,10 +27,19 @@ def ytdlp_download(url: str, param: dict) -> None:
 
 def merge_video(video: str, audio: str, out: str) -> None:
     print("INFO: [ffmpeg] Start convert video: ", out)
+    hash_md5 = hashlib.sha256(out.encode()).hexdigest()
     clip = VideoFileClip(video)
     audioclip = AudioFileClip(audio)
     new_videoclip = clip.set_audio(audioclip)
-    new_videoclip.write_videofile(out, verbose=False, logger=None)
+    new_videoclip.write_videofile(
+        out,
+        verbose=False,
+        logger=None,
+        codec="libx264",
+        audio_codec="aac",
+        temp_audiofile=hash_md5 + ".m4a",
+        remove_temp=True,
+    )
     print("INFO: [ffmpeg] Finished convert video: ", out)
 
 
@@ -38,7 +48,7 @@ def merge_video(video: str, audio: str, out: str) -> None:
 async def endpoint() -> tuple[Response, int]:
     try:
         url = request.args.get("url")
-        fmt = "mp4" if request.args.get("fmt") is None else request.args["fmt"]
+        fmt = "mp4"
         if url is None:
             raise ParameterError
         ydl = YoutubeDL()
