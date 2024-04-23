@@ -1,0 +1,26 @@
+version: '3'
+
+services:
+  redis:
+    image: redis
+
+  worker:
+    build: 
+      dockerfile: ./worker_Dockerfile
+    depends_on:
+      - redis
+    environment:
+      RQ_REDIS_URL: redis://redis
+    volumes:
+      - /mnt/video:/download
+    working_dir: /download
+
+  api:
+    build:
+      dockerfile: ./api_Dockerfile
+    depends_on:
+      - redis
+    environment:
+      RQ_REDIS_URL: redis://redis
+    ports:
+      - 4000:5000

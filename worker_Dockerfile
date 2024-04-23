@@ -9,14 +9,15 @@ RUN apt-get update && \
     apt-get autoremove -y && \
     apt-get clean
 
-COPY requirements.txt .
+COPY ./requirements.txt .
 RUN pip3 install --no-cache --upgrade -r requirements.txt
-COPY src/ src/
-RUN pyinstaller --onefile --clean ./src/main.py
+COPY ./src/ src/
+# RUN pyinstaller --onefile --clean ./src/worker.py
 
-FROM ubuntu:22.04
-COPY --from=builder /workspace/dist/main /usr/local/bin/ytdlpserver
+# FROM ubuntu:22.04
+# COPY --from=builder /workspace/dist/worker /usr/local/bin/ytdlpworker
 WORKDIR /download
 ENV TZ=Asia/Tokyo
 EXPOSE 5000
-ENTRYPOINT ["/usr/local/bin/ytdlpserver"]
+# ENTRYPOINT ["/usr/local/bin/ytdlpworker"]
+ENTRYPOINT ["python3","/workspace/src/worker.py"]
