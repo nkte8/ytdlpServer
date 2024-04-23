@@ -1,5 +1,5 @@
-yt_dlp @ git+https://github.com/yt-dlp/yt-dlp.git@release
+yt-dlp[curl_cffi]
 moviepy
-flask
-nuitka
 flask[async]
+waitress
+pyinstaller

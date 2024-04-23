@@ -1,20 +1,22 @@
-# FROM python:3.11-alpine3.18 as builder
-FROM python:3.11-alpine3.18
+FROM ubuntu:22.04 as builder
 
 WORKDIR /workspace
 ENV DEBIAN_FRONTEND=noninteractive
-# RUN apk --no-cache --update add git gcc musl-dev ffmpeg libc-dev g++ python3-dev patchelf
-RUN apk --no-cache --update add git musl-dev ffmpeg
+RUN apt-get update && \
+    apt-get install -y \
+    python3 python3-pip build-essential \
+    git musl-dev ffmpeg gcc libcurl4-openssl-dev && \
+    apt-get autoremove -y && \
+    apt-get clean
 
 COPY requirements.txt .
 RUN pip3 install --no-cache --upgrade -r requirements.txt
-COPY src/ .
-# RUN nuitka3 --standalone --onefile ./main.py
+COPY src/ src/
+RUN pyinstaller --onefile --clean ./src/main.py
 
-# FROM alpine:3.18.6
-# COPY --from=builder /workspace/main.dist/* /usr/local/bin/
+FROM ubuntu:22.04
+COPY --from=builder /workspace/dist/main /usr/local/bin/ytdlpserver
 WORKDIR /download
 ENV TZ=Asia/Tokyo
 EXPOSE 5000
-# ENTRYPOINT ["/usr/local/bin/main.bin"]
-ENTRYPOINT ["python3","-u","/workspace/main.py"]
+ENTRYPOINT ["/usr/local/bin/ytdlpserver"]
