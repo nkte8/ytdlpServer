@@ -21,8 +21,8 @@ class ParameterError(Exception):
 ## Downloader
 def ytdlp_download(url: str, param: dict) -> None:
     param["quiet"] = True
-    ydl = YoutubeDL(param)
-    ydl.extract_info(url, download=True)
+    with YoutubeDL(param) as ydl:
+        ydl.download(url)
 
 
 def merge_video(video: str, audio: str, out: str) -> None:
@@ -54,27 +54,39 @@ async def endpoint() -> tuple[Response, int]:
         ydl = YoutubeDL()
         ## ydlインスタンスから情報を収集
         info_dict = get_info(ydl, url)
-        video, audio = get_best_format(info_dict, fmt)
-        ## ダウンロード処理
-        for param in video, audio:
-            ytdlp_download(url, param)
+        [video, audio, title] = get_best_format(info_dict, fmt)
 
         # ファイル名
-        video_name = video["outtmpl"]["default"]
-        audio_name = audio["outtmpl"]["default"]
-        output_name = info_dict["title"] + "." + fmt
-        # 残骸があった場合は削除
+        video_name = video["outtmpl"]
+        audio_name = audio["outtmpl"]
+        output_name = title + "." + fmt
+
+        ## ダウンロード処理
+        [
+            ytdlp_download(url, param)
+            for param in [video, audio]
+            if param.get("format") is not None
+        ]
+
+        # 前の処理の残骸がある場合は削除
         if Path(output_name).exists():
             Path(output_name).unlink()
 
-        if (audio["format"] is not None) and (video["format"] is not None):
+        ## 音声/動画共にある場合のみマージ
+        if Path(video_name).exists() and Path(audio_name).exists():
             merge_video(
                 video=video_name,
                 audio=audio_name,
                 out=output_name,
             )
+        elif Path(video_name).exists():
+            Path(video_name).rename(output_name)
+        elif Path(audio_name).exists():
+            Path(audio_name).rename(output_name)
+
         for file in video_name, audio_name:
-            Path(file).unlink()
+            if Path(file).exists():
+                Path(file).unlink()
 
         ## レスポンス
         result_response = (
@@ -99,6 +111,16 @@ async def endpoint() -> tuple[Response, int]:
             ),
             400,
         )
+    except BaseException:
+        result_response = (
+            jsonify(
+                {
+                    "error": "Unexpected Failed",
+                    "message": "Failed to process by unexpected reason.",
+                },
+            ),
+            500,
+        )
     return result_response
 
 
@@ -120,9 +142,10 @@ def get_info(ydl: YoutubeDL, url: str) -> dict:
     return info_dict
 
 
-def get_best_format(info_dict: dict, fmt: str) -> tuple[dict, dict]:
+def get_best_format(info_dict: dict, fmt: str) -> tuple[dict | None, dict | None, str]:
     # 品質リストの下の方が品質が良いと仮定して取得
     title = "downloaded" if info_dict.get("title") is None else info_dict["title"]
+    ## ytdlpに受け渡す情報を作成する
     best_video = {
         "format": None,
         "outtmpl": str(title + " video." + format_set.get(fmt).get("video")),
@@ -137,7 +160,7 @@ def get_best_format(info_dict: dict, fmt: str) -> tuple[dict, dict]:
             best_video["format"] = dlfmt.get("format_id")
         if dlfmt.get("audio_ext") == format_set.get(fmt).get("audio"):
             best_audio["format"] = dlfmt.get("format_id")
-    return best_video, best_audio
+    return best_video, best_audio, title
 
 
 if __name__ == "__main__":
