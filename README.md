@@ -36,7 +36,7 @@ generete `main.exe` and launch. -->
 Only lauch container with mounting download path.
 
 ```sh
-docker run --rm -p 5000:5000 --name ytdlpserver -v /mnt/video:/download -d ytdlpserver:latest
+docker run --rm -p 5000:5000 --name ytdlpserver -v /mnt/video:/download -td ytdlpserver:latest
 ## show log
 docker logs ytdlpserver -f
 ```
