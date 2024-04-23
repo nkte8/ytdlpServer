@@ -22,6 +22,7 @@ class ParameterError(Exception):
 ## Downloader
 def ytdlp_download(url: str, param: dict) -> None:
     param["quiet"] = True
+    param["noplaylist"] = True
     with YoutubeDL(param) as ydl:
         ydl.download(url)
 
@@ -57,7 +58,7 @@ async def endpoint() -> tuple[Response, int]:
             raise ParameterError
 
         ## ydlインスタンスから情報を収集
-        ydl = YoutubeDL()
+        ydl = YoutubeDL(params={"noplaylist": True})
         info_dict = get_info(ydl, url)
         [video, audio, title] = get_best_format(info_dict, fmt)
 
