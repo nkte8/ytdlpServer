@@ -33,10 +33,25 @@ generete `main.exe` and launch. -->
 
 ### Launch as container
 
-Only lauch container with mounting download path.
+Edit `docker-compose.yml` set your directory to `volumes` for download.
+
+```yml
+worker:
+  build:
+    dockerfile: ./Dockerfile_worker
+  depends_on:
+    - redis
+  environment:
+    RQ_REDIS_URL: redis://redis
+  volumes:
+    - /path/to/your/video/dir:/download
+  working_dir: /download
+```
+
+Lauch container with mounting download path.
 
 ```sh
-docker compose up -d 
+docker compose up -d
 ## show log
 docker compose logs -f
 ```
@@ -48,8 +63,8 @@ docker compose logs -f
 
 ## How to use
 
-1. send request like: `curl -X GET "http://localhost:5000/dl?url=https://www.youtube.com/watch?v=XXXXXXXXXX"`
-2. wait a minute and will generate the most quarity `mp4` video.
+1. send request like: `curl -X GET "http://localhost:5000/dl?fmt=mp4&url=https://www.youtube.com/watch?v=XXXXXXXXXX"`
+2. wait a minute and will generate best quarity `mp4` video to your directory.
 
 To make it easy, I recommend create iOS Shortcut like that...
 
