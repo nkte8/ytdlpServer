@@ -23,4 +23,4 @@ services:
     environment:
       RQ_REDIS_URL: redis://redis
     ports:
-      - 4000:5000
+      - 5000:5000

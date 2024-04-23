@@ -2,6 +2,5 @@ yt-dlp[curl_cffi]
 moviepy
 flask
 waitress
-pyinstaller
 rq
 redis

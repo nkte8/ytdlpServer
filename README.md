@@ -9,7 +9,7 @@ ytdlp Sever is a API Endpoint for launch yt-dlp on your network.
 Recommend choise install.
 
 ```sh
-docker build -t ytdlpserver:latest .
+docker compose build
 ```
 
 Attention: Very long to build, wait a moment.
@@ -36,9 +36,9 @@ generete `main.exe` and launch. -->
 Only lauch container with mounting download path.
 
 ```sh
-docker run --rm -p 5000:5000 --name ytdlpserver -v /mnt/video:/download -td ytdlpserver:latest
+docker compose up -d 
 ## show log
-docker logs ytdlpserver -f
+docker compose logs -f
 ```
 
 <!-- ### Launch as exe // not verified
