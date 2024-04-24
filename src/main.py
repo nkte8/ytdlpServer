@@ -7,7 +7,6 @@ from flask import Flask, Response, jsonify, request
 from function import download
 from rq import Queue
 from waitress import serve
-from yt_dlp import YoutubeDL
 
 app = Flask(__name__)
 app.json.ensure_ascii = False
@@ -36,7 +35,6 @@ def endpoint() -> tuple[Response, int]:
 
         if url is None:
             raise ParameterError
-        title = get_title(YoutubeDL({"noplaylist": True}), url)
         ## ydlインスタンスから情報を収集
         ## ダウンロード処理
         q.enqueue(
@@ -45,7 +43,6 @@ def endpoint() -> tuple[Response, int]:
                 url,
                 {
                     "format": fmt,
-                    "outtmpl": title + ".%(ext)s",
                 },
             ),
         )
@@ -54,7 +51,6 @@ def endpoint() -> tuple[Response, int]:
         result_response = (
             jsonify(
                 {
-                    "title": title,
                     "url": url,
                     "format": fmt,
                 },
@@ -74,17 +70,6 @@ def endpoint() -> tuple[Response, int]:
             400,
         )
     return result_response
-
-
-def get_title(ydl: YoutubeDL, url: str) -> str:
-    info_dict = ydl.extract_info(url, download=False)
-    ydl.list_formats(info_dict)
-    return (
-        info_dict.get("title").replace("/", "-").replace("\\", "-")
-        + " ["
-        + info_dict["id"]
-        + "]"
-    )
 
 
 if __name__ == "__main__":
