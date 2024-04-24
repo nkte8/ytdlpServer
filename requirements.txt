@@ -1,5 +1,5 @@
 yt-dlp[curl_cffi]
-moviepy
+# moviepy
 flask
 waitress
 rq
