@@ -15,31 +15,24 @@ app.json.ensure_ascii = False
 ## タスクキュー
 q = Queue(connection=redis.from_url(os.environ.get("RQ_REDIS_URL")))
 
-audioext = ["m4a", "mp3", "opus"]
-
 
 class ParameterError(Exception):
     def __init__(self: Exception) -> None:
         return
 
 
-@app.route("/dl", methods=["GET"])
+@app.route("/ytdlp", methods=["POST"])
 def endpoint() -> tuple[Response, int]:
     try:
-        query = request.args
-        url = query["url"]
-        ext = query.get("ext")
+        form = request.json
+        url = form.get("url")
         fmt = (
             "bestvideo*+bestaudio/best"
-            if query.get("fmt") is None
-            else query.get("fmt")
+            if form.get("format") is None
+            else form.get("format")
         )
-        if ext in audioext:
-            fmt = "bestaudio[ext=" + ext + "]"
-        elif ext is not None:
-            fmt = "bestvideo*[ext=" + ext + "]+bestaudio"
 
-        print("INFO: url =", url, "/ fmt =", fmt, "/ ext =", ext)
+        print("INFO: url =", url, "/ format =", fmt)
 
         if url is None:
             raise ParameterError
@@ -54,7 +47,6 @@ def endpoint() -> tuple[Response, int]:
                     "format": fmt,
                     "outtmpl": title + ".%(ext)s",
                 },
-                ext,
             ),
         )
 

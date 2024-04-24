@@ -3,10 +3,9 @@ from yt_dlp import YoutubeDL
 
 
 ## Process
-def download(url: str, param: dict, ext: str) -> None:
+def download(url: str, param: dict) -> None:
     param["quiet"] = True
     param["noplaylist"] = True
-    if ext is not None:
-        param["merge_output_format"] = ext
+    param["overwrites"] = True
     with YoutubeDL(param) as ydl:
         ydl.download(url)

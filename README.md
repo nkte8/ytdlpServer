@@ -51,7 +51,8 @@ worker:
 Lauch container with mounting download path.
 
 ```sh
-docker compose up -d
+## set scale of workers. 
+docker compose up -d --scale worker=2
 ## show log
 docker compose logs -f
 ```
@@ -63,8 +64,12 @@ docker compose logs -f
 
 ## How to use
 
-1. send request like: `curl -X GET "http://localhost:5000/dl?fmt=mp4&url=https://www.youtube.com/watch?v=XXXXXXXXXX"`
-2. wait a minute and will generate best quarity `mp4` video to your directory.
+1. send request like:
+    ```
+    curl -X POST "http://localhost:5000/ytdlp" -d "{\"url\": "https://www.youtube.com/watch?v=XXXXXXXXXX", \"format\": \"bv*+ba/best\"}
+    ```
+
+2. wait a minute and will generate video to your directory.
 
 To make it easy, I recommend create iOS Shortcut like that...
 
