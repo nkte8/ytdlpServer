@@ -9,7 +9,7 @@ ytdlp Sever is a API Endpoint for launch yt-dlp on your network.
 Recommend choise install.
 
 ```sh
-docker build -t ytdlpserver:latest .
+docker compose build
 ```
 
 Attention: Very long to build, wait a moment.
@@ -33,12 +33,28 @@ generete `main.exe` and launch. -->
 
 ### Launch as container
 
-Only lauch container with mounting download path.
+Edit `docker-compose.yml` set your directory to `volumes` for download.
+
+```yml
+worker:
+  build:
+    dockerfile: ./Dockerfile_worker
+  depends_on:
+    - redis
+  environment:
+    RQ_REDIS_URL: redis://redis
+  volumes:
+    - /path/to/your/video/dir:/download
+  working_dir: /download
+```
+
+Lauch container with mounting download path.
 
 ```sh
-docker run --rm -p 5000:5000 --name ytdlpserver -v /mnt/video:/download -td ytdlpserver:latest
+## set scale of workers. 
+docker compose up -d --scale worker=2
 ## show log
-docker logs ytdlpserver -f
+docker compose logs -f
 ```
 
 <!-- ### Launch as exe // not verified
@@ -48,8 +64,12 @@ docker logs ytdlpserver -f
 
 ## How to use
 
-1. send request like: `curl -X GET "http://localhost:5000/dl?url=https://www.youtube.com/watch?v=XXXXXXXXXX"`
-2. wait a minute and will generate the most quarity `mp4` video.
+1. send request like:
+    ```
+    curl -X POST "http://localhost:5000/ytdlp" -d "{\"url\": "https://www.youtube.com/watch?v=XXXXXXXXXX", \"format\": \"bv*+ba/best\"}
+    ```
+
+2. wait a minute and will generate video to your directory.
 
 To make it easy, I recommend create iOS Shortcut like that...
 

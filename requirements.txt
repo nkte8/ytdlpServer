@@ -1,5 +1,6 @@
 yt-dlp[curl_cffi]
-moviepy
-flask[async]
+# moviepy
+flask
 waitress
-pyinstaller
+rq
+redis
