@@ -2,7 +2,7 @@ FROM alpine:3.18
 
 WORKDIR /workspace
 ENV DEBIAN_FRONTEND=noninteractive
-RUN apk --no-cache --update add python3 py3-pip ffmpeg gcc musl-dev curl-dev 
+RUN apk --no-cache --update add python3 py3-pip gcc ffmpeg
 
 COPY requirements.txt .
 RUN pip3 install --no-cache --upgrade -r requirements.txt
