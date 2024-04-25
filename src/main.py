@@ -25,6 +25,7 @@ def endpoint() -> tuple[Response, int]:
     try:
         form = request.json
         url = form.get("url")
+        lang = "ja" if form.get("language") is None else form.get("language")
         fmt = (
             "bestvideo*+bestaudio/best"
             if form.get("format") is None
@@ -43,6 +44,10 @@ def endpoint() -> tuple[Response, int]:
                 url,
                 {
                     "format": fmt,
+                    "language": lang,
+                    "http_headers": {
+                        "Accept-Language": lang + ",*;q=0.5",
+                    },
                 },
             ),
         )
