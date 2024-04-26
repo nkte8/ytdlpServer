@@ -2,6 +2,33 @@
 
 ytdlp Sever is a API Endpoint for launch yt-dlp on your network.
 
+## tl;dr
+
+Prepair Ubuntu Server and run here.
+```sh
+sudo apt update
+sudo apt install docker.io cifs-utils
+sudo gpasswd --add ubuntu docker
+newgrp docker
+sudo curl -SL https://github.com/docker/compose/releases/download/v2.4.1/docker-compose-linux-x86_64 -o /usr/local/bin/docker-compose
+sudo chmod +x /usr/local/bin/docker-compose
+```
+
+Customise to your environment.
+```sh
+sudo mkdir -p /mnt/video
+sudo tee -a "//<your windows ipaddr>/<your sharing path>   /mnt/video   cifs  nofail,_netdev,x-systemd.automount,user=<your username>,password=<your password>,file_mode=0664,dir_mode=0775  0  0" /etc/fstab
+sudo mount -a
+```
+
+Start Service.
+```sh
+docker-compose up -d
+```
+
+Now you can download video by `curl -X POST "http://<Your Server IPaddr>:5000/ytdlp" -d "{\"url\": \"https://www.youtube.com/watch?v=XXXXXXXXXX\"}"`
+
+
 ## Setup
 
 ### Install Container engine
@@ -51,6 +78,8 @@ docker.io may charge a fee in the future.
 sudo apt update
 sudo apt install docker.io
 sudo gpasswd --add ubuntu docker
+newgrp docker
+## if docker soket is down, reboot
 sudo reboot
 ```
 
@@ -85,7 +114,14 @@ Create mout directory
 sudo mkdir -p /mnt/video
 ```
 
-Create samba credential directory and credential file for connect windows share directory.
+if you need not hide your credential, you can setup `fstab` with hardcode credential.
+
+ex. mount `¥¥192.168.3.120¥Videos`, user name is `samba`, password is `samba`. add that to `/etc/fstab`
+```conf
+//192.168.3.120/Videos   /mnt/video   cifs  nofail,_netdev,x-systemd.automount,user=samba,password=samba,file_mode=0664,dir_mode=0775  0  0
+```
+
+If not, create samba credential directory and credential file for connect windows share directory.
 ```sh
 sudo mkdir -p /etc/smb-credentials/
 cat << EOF | sudo tee /etc/smb-credentials/.pw
@@ -173,7 +209,7 @@ docker-compose logs -f
 ## How to use
 
 1. send request like:
-    ```
+    ```sh
     curl -X POST "http://localhost:5000/ytdlp" -d "{\"url\": "https://www.youtube.com/watch?v=XXXXXXXXXX", \"format\": \"bv*+ba/best\"}
     ```
 
