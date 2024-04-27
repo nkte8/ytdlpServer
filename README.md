@@ -8,7 +8,7 @@ Prepair Ubuntu Server and run here.
 ```sh
 sudo apt update
 sudo apt install docker.io cifs-utils
-sudo gpasswd --add ubuntu docker
+sudo gpasswd --add $USER docker
 newgrp docker
 sudo curl -SL https://github.com/docker/compose/releases/download/v2.4.1/docker-compose-linux-x86_64 -o /usr/local/bin/docker-compose
 sudo chmod +x /usr/local/bin/docker-compose
@@ -77,7 +77,7 @@ docker.io may charge a fee in the future.
 ```sh
 sudo apt update
 sudo apt install docker.io
-sudo gpasswd --add ubuntu docker
+sudo gpasswd --add $USER docker
 newgrp docker
 ## if docker soket is down, reboot
 sudo reboot
