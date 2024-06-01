@@ -8,6 +8,16 @@ def download(url: str, param: dict) -> None:
     param["noplaylist"] = True
     param["overwrites"] = True
     param["outtmpl"] = str(get_title(url=url) + ".%(ext)s")
+    param["writethumbnail"] = "true"
+    param["extractor_retries"] = 10
+    param["retries"] = 10
+    param["wait_for_video"] = [3, 60]
+    param["postprocessors"] = [
+        {
+            "key": "EmbedThumbnail",
+            "already_have_thumbnail": False,
+        },
+    ]
     with YoutubeDL(param) as ydl:
         ydl.download(url)
 

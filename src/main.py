@@ -12,8 +12,10 @@ app = Flask(__name__)
 app.json.ensure_ascii = False
 
 ## タスクキュー
-q = Queue(connection=redis.from_url(os.environ.get("RQ_REDIS_URL")))
-
+q = Queue(
+    connection=redis.from_url(os.environ.get("RQ_REDIS_URL")),
+    default_timeout=60 * 60,
+)
 
 class ParameterError(Exception):
     def __init__(self: Exception) -> None:
@@ -38,6 +40,7 @@ def endpoint() -> tuple[Response, int]:
             raise ParameterError
         ## ydlインスタンスから情報を収集
         ## ダウンロード処理
+        ## 15分でタイムアウト
         q.enqueue(
             download,
             args=(

@@ -4,3 +4,4 @@ flask
 waitress
 rq
 redis
+mutagen

@@ -23,7 +23,7 @@ sudo mount -a
 
 Start Service.
 ```sh
-docker-compose up -d
+docker-compose up -d --scale worker=4
 ```
 
 Now you can download video by `curl -X POST "http://<Your Server IPaddr>:5000/ytdlp" -d "{\"url\": \"https://www.youtube.com/watch?v=XXXXXXXXXX\"}"`
@@ -196,7 +196,7 @@ Lauch container with mounting download path.
 
 ```sh
 ## set scale of workers. 
-docker-compose up -d --scale worker=2
+docker-compose up -d --scale worker=4
 ## show log
 docker-compose logs -f
 ```
