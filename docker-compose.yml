@@ -3,6 +3,7 @@ version: '3'
 services:
   redis:
     image: redis
+    restart: always
 
   api:
     build:
@@ -13,6 +14,7 @@ services:
       RQ_REDIS_URL: redis://redis
     ports:
       - 5000:5000
+    restart: always
 
   worker:
     build:
@@ -24,3 +26,4 @@ services:
     volumes:
       - /mnt/video:/download
     working_dir: /download
+    restart: always

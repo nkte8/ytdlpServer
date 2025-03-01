@@ -4,9 +4,10 @@ import os
 
 import redis
 from flask import Flask, Response, jsonify, request
-from function import download
 from rq import Queue
 from waitress import serve
+
+from function import download
 
 app = Flask(__name__)
 app.json.ensure_ascii = False
@@ -16,6 +17,7 @@ q = Queue(
     connection=redis.from_url(os.environ.get("RQ_REDIS_URL")),
     default_timeout=60 * 60,
 )
+
 
 class ParameterError(Exception):
     def __init__(self: Exception) -> None:
@@ -33,6 +35,8 @@ def endpoint() -> tuple[Response, int]:
             if form.get("format") is None
             else form.get("format")
         )
+        ## 指定された場合はタイムスタンプ更新をしない
+        origts = form.get("origts") is not None
 
         print("INFO: url =", url, "/ format =", fmt)
 
@@ -51,6 +55,9 @@ def endpoint() -> tuple[Response, int]:
                     "http_headers": {
                         "Accept-Language": lang + ",*;q=0.5",
                     },
+                },
+                {
+                    "origts": origts,
                 },
             ),
         )

@@ -1,11 +1,12 @@
-FROM alpine:3.18
+FROM alpine:3.21
 
 WORKDIR /workspace
 ENV DEBIAN_FRONTEND=noninteractive
-RUN apk --no-cache --update add python3 py3-pip gcc ffmpeg mutagen
+RUN apk --no-cache --update add python3 py3-pip gcc ffmpeg mutagen~=1.47.0
 
 COPY requirements.txt .
-RUN pip3 install --no-cache --upgrade -r requirements.txt
+## --break-system-packages: alphineではapkを使ってpipパッケージを導入する変更が行われたことに対する対処
+RUN pip3 install --no-cache --upgrade --break-system-packages -r requirements.txt
 COPY src/ .
 WORKDIR /download
 ENV TZ=Asia/Tokyo
