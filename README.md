@@ -37,9 +37,9 @@ docker-compose up -d --scale worker=4
 
 APIサーバに、以下のような POSTリクエストを送信する。
 
-   ```sh
-   curl -H "Content-Type: application/json" -k -X POST "https://localhost/ytdlp" -d "{\"url\": "https://www.youtube.com/watch?v=XXXXXXXXXX", \"options\": \"--format bv*+ba/best\", \"savedir\": \"unsorted\"}
-   ```
+```sh
+curl -H "Content-Type: application/json" -k -X POST "https://localhost/ytdlp" -d "{\"url\": "https://www.youtube.com/watch?v=XXXXXXXXXX", \"options\": \"--format bv*+ba/best\", \"savedir\": \"unsorted\"}
+```
 
 iOSショートカットなどを作成すると楽に操作できる。
 
@@ -131,7 +131,9 @@ ex. mount `¥¥192.168.3.120¥Videos`, user name is `samba`, password is `samba`
 ```conf
 //192.168.3.120/Videos   /mnt/video   cifs  nofail,_netdev,x-systemd.automount,user=samba,password=samba,file_mode=0666,dir_mode=0777  0  0
 ```
+
 または、credentialsを別ファイルで設定する
+
 ```sh
 sudo mkdir -p /etc/smb-credentials/
 cat << EOF | sudo tee /etc/smb-credentials/.pw
@@ -144,6 +146,7 @@ sudo chmod +600 /etc/smb-credentials/.pw
 ```
 
 /etc/fstabを作成したら、マウント操作を行う
+
 ```sh
 sudo mount -a
 ```
@@ -151,6 +154,7 @@ sudo mount -a
 ## コンテナのビルド
 
 docker-composeで以下でビルドを行う
+
 ```sh
 docker-compose build
 ```
@@ -161,14 +165,17 @@ docker-compose build
 docker-composeにおいては`<ホスト側>:<コンテナ側>`で設定する。
 
 以下はサーバの`/mnt/video`に動画をダウンロードする例
+
 ```yml
 worker:
   build: ./workerServer
 ...
-  volumes:
-    - /mnt/video:/download
+volumes:
+  - /mnt/video:/download
 ```
+
 ytdlp Serverを起動する。
+
 ```sh
 ## set scale of workers.
 docker-compose up -d --scale worker=4
@@ -176,8 +183,10 @@ docker-compose up -d --scale worker=4
 docker-compose logs -f
 ```
 
-HTTPS対応が不要な場合はapiの穴を開け、nginxをコメントアウトする。
-```yaml
+HTTPS対応したい場合は、nginxコンテナを使う。  
+参考： `docker-compose.nginx.yml`
+
+```diff
   api:
     build: ./apiServer
     depends_on:
@@ -186,18 +195,41 @@ HTTPS対応が不要な場合はapiの穴を開け、nginxをコメントアウ�
       REDIS_URL: redis://redis
       SERVER_TTL: 24
     restart: always
-    ports:
-      - 5000:5000
-#   nginx:
-#     build: ./nginx
-#     depends_on:
-#       - api
-#     ports:
-#       - 80:80
-#       - 443:443
-#     restart: always
+-   ports:
+-     - 5000:5000
++   nginx:
++     build: ./nginx
++     depends_on:
++       - api
++     ports:
++     - 443:443
++     restart: always
 ```
 
 ## キューの確認
 
 `http://<IPアドレス>:5540`にアクセスするとRedis Insightからキューを確認できる。
+
+# その他の使い方
+
+## Cloudflare Tunnelで外部利用可能にする
+
+Cloudflare Tunnelを使うことで、インターネット上からもytdlpを利用可能。  
+`docker-compose.cloudflare.yml`を参照すること。
+
+
+# トラブルシューティング
+
+## API Version Mismatch Error
+
+docker-compose コマンドで、`client and server have different API versions` のようなエラーが出た場合、以下で対応可能
+
+`/etc/docker/daemon.json`に以下を追加する
+
+```diff
+  {
+    ...
++   "min-api-version": "1.32"
+    ...
+  }
+```

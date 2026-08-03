@@ -4,6 +4,11 @@ services:
   redis:
     image: redis
     restart: always
+  cloudflare:
+    image: cloudflare/cloudflared:latest
+    command: tunnel --no-autoupdate run --token <YOUR_CLOUDFLARE_TUNNEL_TOKEN>
+    depends_on:
+    - api
   api:
     build: ./apiServer
     depends_on:
