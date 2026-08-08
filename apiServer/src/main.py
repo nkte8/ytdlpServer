@@ -46,15 +46,24 @@ class ParameterError(Exception):
         return
 
 
-def parse_request(form: dict) -> tuple[str, list, str | None]:
+def parse_request(form: dict) -> tuple[str, list, str | None, str | None]:
     if not isinstance(form, dict):
         raise ParameterError
 
     url = form.get("url")
     savedir = form.get("savedir")
-    savedir = unicodedata.normalize("NFC", savedir)
-    savedir = re.sub(r'[\\/¥:*?"<>|]', "_", savedir)
-    savedir = re.sub(r"\s+", " ", savedir.replace("\u3000", "")).strip()
+    if savedir is not None:
+        if not isinstance(savedir, str):
+            raise ParameterError
+        savedir = unicodedata.normalize("NFC", savedir)
+        savedir = re.sub(r'[\\/¥:*?"<>|]', "_", savedir)
+        savedir = re.sub(r"\s+", " ", savedir.replace("\u3000", "")).strip()
+
+    namefield = form.get("namefield")
+    if namefield is not None and not isinstance(namefield, str):
+        raise ParameterError
+    if isinstance(namefield, str) and namefield.strip() == "":
+        namefield = None
 
     # Validate url
     if not isinstance(url, str) or url.strip() == "":
@@ -75,26 +84,34 @@ def parse_request(form: dict) -> tuple[str, list, str | None]:
         # split on whitespace and remove empty segments
         options = [p for p in raw_options.split() if p != ""]
 
-    # Validate savedir if provided
-    if savedir is not None and not isinstance(savedir, str):
-        raise ParameterError
+    return url, options, savedir, namefield
 
-    return url, options, savedir
-
-def probe_jobs(url: str, options: list, savedir: str | None) -> list[dict]:
+def probe_jobs(
+        url: str,
+        options: list,
+        savedir: str | None,
+        namefield: str | None) -> list[dict]:
     try:
-        return function.probe_and_build_jobs(url, options, savedir)
+        return function.probe_and_build_jobs(url, options, savedir, namefield)
     except RuntimeError as e:
         msg = str(e)
         print("ERROR: probe failed:", msg)
         raise
 
 
-def add_request(url: str, options: list, savedir: str | None) -> None:
+def add_request(
+        url: str,
+        options: list,
+        savedir: str | None,
+        namefield: str | None) -> None:
     key = f"{REQUESTS_PREFIX_BASE}"
     try:
         payload = json.dumps({
-            "url": url, "options": options, "savedir": savedir},
+            "url": url,
+            "options": options,
+            "savedir": savedir,
+            "namefield": namefield,
+            },
             ensure_ascii=False)
         redis_client.rpush(key, payload)
         print("INFO: Add Request to Redis.")
@@ -121,9 +138,14 @@ def push_jobs(jobs: list[dict]) -> int:
 
     return len(entries)
 
-def handle_download(url: str, options: list, savedir: str | None) -> tuple[dict, int]:
+def handle_download(
+        url: str,
+        options: list,
+        savedir: str | None,
+        namefield: str | None) -> tuple[dict, int]:
+    jobs: list[dict] = []
     try:
-        jobs = probe_jobs(url, options, savedir)
+        jobs = probe_jobs(url, options, savedir, namefield)
     except RuntimeError:
         print("ERROR: yt-dlp probe failed — process exit.")
 
@@ -137,6 +159,9 @@ def handle_download(url: str, options: list, savedir: str | None) -> tuple[dict,
 
         return jsonify(
             {"message": "yt-dlp probe failed; wait restart yt-dlp."}), 400
+    except ValueError as e:
+        print("ERROR: invalid namefield:", e)
+        return jsonify({"message": str(e)}), 400
     except Exception as e:
         print("ERROR: unexpected error during probe:", e, " jobs: ",
               json.dumps(jobs, ensure_ascii=False))
@@ -158,26 +183,28 @@ def endpoint() -> tuple[dict, int]:
     # endpoint main flow
     form = request.json
     try:
-        url, options, savedir = parse_request(form)
+        url, options, savedir, namefield = parse_request(form)
     except ParameterError:
         print("Error: Invalid request requested.")
         return jsonify({"message": "Invalid request."}), 400
     if DEBUG_MODE:
-        print(f"DEBUG REQUEST: url={url}, options={options}, savedir={savedir}")
+        print(
+            "DEBUG REQUEST: "
+            f"url={url}, options={options}, savedir={savedir}, namefield={namefield}")
 
-    return handle_download(url, options, savedir)
+    return handle_download(url, options, savedir, namefield)
 
 @app.route("/schedule", methods=["POST"])
 def schedule_endpoint() -> tuple[dict, int]:
     form = request.json
     try:
-        url, options, savedir = parse_request(form)
+        url, options, savedir, namefield = parse_request(form)
     except ParameterError:
         print("Error: Invalid scheduled request.")
         return jsonify({"message": "Invalid request."}), 400
 
     try:
-        add_request(url, options, savedir)
+        add_request(url, options, savedir, namefield)
     except Exception:
         return jsonify({"message": "Internal server error."}), 500
 
@@ -253,8 +280,9 @@ def download_scheduled() -> tuple[dict, int]:
             url = req.get("url")
             options = req.get("options") or []
             savedir = req.get("savedir")
+            namefield = req.get("namefield")
 
-            msg, code = handle_download(url, options, savedir)
+            msg, code = handle_download(url, options, savedir, namefield)
             if code != 200:
                 raise Exception(msg.get("message", "Unknown error"))
 

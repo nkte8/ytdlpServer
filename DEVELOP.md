@@ -47,3 +47,9 @@ docker run --rm --name ytdlp-worker -v /mnt/video:/download -e REDIS_URL=redis:/
 docker rm -f redis-ytdlp redisinsight ytdlp-api ytdlp-worker
 docker container prune
 ```
+
+# Send request
+
+```sh
+curl -H "Content-type: application/json" -X POST "http://192.168.3.152:5000/download" -d '{"url":"<video url>","options":"--format bv*[vcodec^=avc1][ext=mp4]+ba[ext=m4a]/best --no-playlist --extractor-args youtube:lang=ja --windows-filenames --merge-output-format mp4", "savedir": "temp", "namefield": "%(title)s [%(id)s]"}'
+```
