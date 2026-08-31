@@ -3,6 +3,7 @@ FROM alpine:3.21
 WORKDIR /workspace
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apk --no-cache --update add python3 py3-pip nginx
+RUN curl -fsSL https://deno.land/install.sh | sh
 
 COPY requirements.txt .
 
